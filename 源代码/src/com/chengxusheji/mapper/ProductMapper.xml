@@ -1,0 +1,62 @@
+﻿<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace命名空间，为了对sql语句进行隔离，方便管理，mapper开发dao方式，使用namespace有特殊作用  
+mapper代理开发时将namespace指定为mapper接口的全限定名  
+ -->
+<mapper namespace="com.chengxusheji.mapper.ProductMapper"> 
+<!--在mapper.xml文件中配置很多的sql语句，执行每个sql语句时，封装为MappedStatement对象 
+mapper.xml以statement为单位管理sql语句  
+ -->
+	<!-- 添加商品记录 -->
+	<insert id="addProduct" parameterType="product">
+		insert into t_product(productClassObj,productName,mainPhoto,productNum,price,recommandFlag,recipeFlag,productDesc,addTime) values 
+		(#{productClassObj.classId},#{productName},#{mainPhoto},#{productNum},#{price},#{recommandFlag},#{recipeFlag},#{productDesc},#{addTime})
+	</insert>
+
+	<!-- 按照查询条件分页查询商品记录 -->
+	<select id="queryProduct" resultMap="productMap" >
+		select t_product.* from t_product,t_productClass ${where} and t_product.productClassObj = t_productClass.classId limit #{startIndex},#{pageSize}
+	</select>
+	<resultMap id="productMap" type="product">
+        <id property="productId" column="productId" />
+        <association property="productClassObj" column="productClassObj" select="com.chengxusheji.mapper.ProductClassMapper.getProductClass" />
+    </resultMap>
+
+    <!-- 按照查询条件查询所有商品记录 -->
+	<select id="queryProductList" resultMap="productMap" >
+		select t_product.* from t_product,t_productClass ${where} and t_product.productClassObj = t_productClass.classId
+	</select>
+	
+	<!-- 按照查询条件查询推荐商品的列表 -->
+	<select id="queryRecommendProductList" resultMap="productMap" >
+		select t_product.* from t_product,t_productClass,t_recommend ${where} and t_product.productClassObj = t_productClass.classId and t_product.productId = t_recommend.item_id order by weight desc
+	</select>
+	
+	
+	<!-- 按照查询条件查询相似商品的列表 -->
+	<select id="querySimilarProductList" resultMap="productMap" >
+		select t_product.* from t_product where productId in (select t_similar_item.similar_item_id from t_product,t_productClass,t_similar_item ${where} and t_product.productClassObj = t_productClass.classId and t_product.productId = t_similar_item.item_id order by similar desc)
+	</select>
+	
+	
+
+    <!-- 按照查询条件的商品记录数 -->
+	<select id="queryProductCount" resultType="int">
+		select count(*) from t_product,t_productClass ${where} and t_product.productClassObj = t_productClass.classId
+	</select>
+
+	<!-- 根据主键查询某个商品记录 -->
+	<select id="getProduct" parameterType="int" resultMap="productMap">
+		select * from t_product where t_product.productId = #{productId}
+	</select>
+
+	<!-- 更新商品记录 -->
+	<update id="updateProduct" parameterType="product">
+		update t_product set productClassObj=#{productClassObj.classId},productName=#{productName},mainPhoto=#{mainPhoto},productNum=#{productNum},price=#{price},recommandFlag=#{recommandFlag},recipeFlag=#{recipeFlag},productDesc=#{productDesc},addTime=#{addTime} where productId = #{productId}
+	</update>
+
+	<!-- 删除商品记录 -->
+	<delete id="deleteProduct" parameterType="int">
+		delete from t_product where productId=#{productId}
+	</delete>
+
+</mapper>
